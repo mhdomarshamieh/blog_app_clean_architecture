@@ -1,21 +1,43 @@
-import 'package:blog_app_clean_architecture/core/core/app_secrets.dart';
+import 'package:blog_app_clean_architecture/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app_clean_architecture/core/theme/app_theme.dart';
+import 'package:blog_app_clean_architecture/features/authentication/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app_clean_architecture/features/authentication/presentation/pages/login_page.dart';
+import 'package:blog_app_clean_architecture/init_dependencies.dart';
 import 'package:blog_app_clean_architecture/router.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final supabase = await Supabase.initialize(
-    url: AppSecrets.supabaseUrl,
-    anonKey: AppSecrets.supabaseAnonKey,
+  await initDependencies();
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => serviceLocator<AuthBloc>(),
+        ),
+        BlocProvider(
+          create: (_) => serviceLocator<AppUserCubit>(),
+        ),
+      ],
+      child: const MyApp(),
+    ),
   );
-  runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<AuthBloc>().add(AuthIsUserLoggedIn());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +46,19 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.darkThemeMode,
       debugShowCheckedModeBanner: false,
       onGenerateRoute: (settings) => generateRoute(settings),
-      home: const LoginPage(),
+      home: BlocSelector<AppUserCubit, AppUserState, bool>(
+        selector: (state) => state is AppUserLoggedIn,
+        builder: (context, isLoggedIn) {
+          if (isLoggedIn) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Logged in'),
+              ),
+            );
+          }
+          return const LoginPage();
+        },
+      ),
     );
   }
 }
