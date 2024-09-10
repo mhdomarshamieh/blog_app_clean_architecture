@@ -2,6 +2,8 @@ import 'package:blog_app_clean_architecture/core/common/cubits/app_user/app_user
 import 'package:blog_app_clean_architecture/core/theme/app_theme.dart';
 import 'package:blog_app_clean_architecture/features/authentication/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app_clean_architecture/features/authentication/presentation/pages/login_page.dart';
+import 'package:blog_app_clean_architecture/features/blog/presentation/bloc/blog_bloc.dart';
+import 'package:blog_app_clean_architecture/features/blog/presentation/pages/blog_page.dart';
 import 'package:blog_app_clean_architecture/init_dependencies.dart';
 import 'package:blog_app_clean_architecture/router.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +21,7 @@ void main() async {
         BlocProvider(
           create: (_) => serviceLocator<AppUserCubit>(),
         ),
+        BlocProvider(create: (_) => serviceLocator<BlogBloc>())
       ],
       child: const MyApp(),
     ),
@@ -50,11 +53,7 @@ class _MyAppState extends State<MyApp> {
         selector: (state) => state is AppUserLoggedIn,
         builder: (context, isLoggedIn) {
           if (isLoggedIn) {
-            return const Scaffold(
-              body: Center(
-                child: Text('Logged in'),
-              ),
-            );
+            return const BlogPage();
           }
           return const LoginPage();
         },

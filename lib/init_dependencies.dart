@@ -7,6 +7,12 @@ import 'package:blog_app_clean_architecture/features/authentication/domain/use_c
 import 'package:blog_app_clean_architecture/features/authentication/domain/use_cases/user_login.dart';
 import 'package:blog_app_clean_architecture/features/authentication/domain/use_cases/user_sign_up.dart';
 import 'package:blog_app_clean_architecture/features/authentication/presentation/bloc/auth_bloc.dart';
+import 'package:blog_app_clean_architecture/features/blog/data/data_sources/blog_remote_data_source.dart';
+import 'package:blog_app_clean_architecture/features/blog/data/repositories/blog_repository.dart';
+import 'package:blog_app_clean_architecture/features/blog/domain/repositories/i_blog_repository.dart';
+import 'package:blog_app_clean_architecture/features/blog/domain/use_cases/get_all_blogs.dart';
+import 'package:blog_app_clean_architecture/features/blog/domain/use_cases/upload_blog.dart';
+import 'package:blog_app_clean_architecture/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,6 +20,7 @@ final serviceLocator = GetIt.instance;
 
 Future<void> initDependencies() async {
   _initAuth();
+  _initBlog();
   final supabase = await Supabase.initialize(
     url: AppSecrets.supabaseUrl,
     anonKey: AppSecrets.supabaseAnonKey,
@@ -64,4 +71,34 @@ void _initAuth() {
       appUserCubit: serviceLocator(),
     ),
   );
+}
+
+void _initBlog() {
+  serviceLocator
+    ..registerFactory<IBlogRemoteDataSource>(
+      () => BlogRemoteDataSource(
+        supabaseClient: serviceLocator(),
+      ),
+    )
+    ..registerFactory<IBlogRepository>(
+      () => BlogRepository(
+        serviceLocator(),
+      ),
+    )
+    ..registerFactory(
+      () => UploadBlog(
+        serviceLocator(),
+      ),
+    )
+    ..registerFactory(
+      () => GetAllBlogs(
+        serviceLocator(),
+      ),
+    )
+    ..registerLazySingleton(
+      () => BlogBloc(
+        uploadBlog: serviceLocator(),
+        getAllBlogs: serviceLocator(),
+      ),
+    );
 }
